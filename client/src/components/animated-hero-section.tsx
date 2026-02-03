@@ -175,7 +175,7 @@ export function AnimatedHeroSection() {
       const scale = scaleRef.current;
       const LARGE_PIXEL_SIZE = 8 * scale;
       const SMALL_PIXEL_SIZE = 4 * scale;
-      const BALL_SPEED = 10 * scale;
+      const BALL_SPEED = 6 * scale;
 
       pixelsRef.current = [];
       const words = ["LESS SCROLLING.", "MORE UNDERSTANDING"];
@@ -369,14 +369,14 @@ export function AnimatedHeroSection() {
             0,
             Math.min(canvas.height - paddle.height, paddle.targetY),
           );
-          paddle.y += (paddle.targetY - paddle.y) * 0.2;
+          paddle.y += (paddle.targetY - paddle.y) * 0.1;
         } else {
           paddle.targetY = ball.x - paddle.width / 2;
           paddle.targetY = Math.max(
             0,
             Math.min(canvas.width - paddle.width, paddle.targetY),
           );
-          paddle.x += (paddle.targetY - paddle.x) * 0.2;
+          paddle.x += (paddle.targetY - paddle.x) * 0.1;
         }
       });
 
