@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const COLOR = "#FFFFFF";
 const HIT_COLOR = "#333333";
@@ -156,6 +157,7 @@ export function AnimatedHeroSection() {
   const ballRef = useRef<Ball>({ x: 0, y: 0, dx: 0, dy: 0, radius: 0 });
   const paddlesRef = useRef<Paddle[]>([]);
   const scaleRef = useRef(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -452,7 +454,8 @@ export function AnimatedHeroSection() {
       />
 
       <button
-        className="cursor-target absolute bottom-20 left-1/2 transform -translate-x-1/2
+        onClick={() => navigate("/select-semester")}
+        className="cursor-target absolute bottom-20 left-1/2 transform -translate-x-1/2 
                    font-mono font-bold text-xl uppercase tracking-widest
                    text-white bg-transparent border-4 border-white
                    px-8 py-4 transition-all duration-100 ease-linear

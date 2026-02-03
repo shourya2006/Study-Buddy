@@ -1,6 +1,9 @@
+import { Routes, Route } from "react-router-dom";
 import AnimatedHeroSection from "./components/animated-hero-section";
-import "./App.css";
 import TargetCursor from "./components/Cursor";
+import SelectSemester from "./pages/SelectSemester";
+import "./App.css";
+
 function App() {
   return (
     <>
@@ -10,7 +13,10 @@ function App() {
         parallaxOn
         hoverDuration={0.2}
       />
-      <AnimatedHeroSection />
+      <Routes>
+        <Route path="/" element={<AnimatedHeroSection />} />
+        <Route path="/select-semester" element={<SelectSemester />} />
+      </Routes>
     </>
   );
 }
