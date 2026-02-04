@@ -3,6 +3,7 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("./config/passport");
 const connectDB = require("./db");
+const { initNewtonTokenCron } = require("./services/newtonToken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5001;
@@ -37,6 +38,9 @@ app.use(
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Initialize Newton Token Cron Job
+initNewtonTokenCron();
 
 // Routes
 app.use("/api/auth", require("./auth/route"));
