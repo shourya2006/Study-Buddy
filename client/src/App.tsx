@@ -6,6 +6,7 @@ import SelectSemester from "./pages/SelectSemester";
 import SelectSubject from "./pages/SelectSubject";
 import ChatPage from "./pages/ChatPage";
 import AuthPage from "./pages/AuthPage";
+import AuthCallback from "./pages/AuthCallback";
 import "./App.css";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<AnimatedHeroSection />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Protected Routes */}
         <Route

@@ -169,7 +169,11 @@ const AuthPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => (window.location.href = "https://google.com")} // Placeholder
+              onClick={() => {
+                const apiUrl =
+                  import.meta.env.VITE_API_URL || "http://localhost:5001";
+                window.location.href = `${apiUrl}/api/auth/google`;
+              }}
               className="cursor-target w-full bg-white/5 border border-white/10 text-white py-3 font-bold tracking-[0.1em] hover:bg-white hover:text-black hover:border-white transition-all duration-300 flex items-center justify-center gap-3 group/google"
             >
               {/* Simple Google Icon SVG Placeholder */}

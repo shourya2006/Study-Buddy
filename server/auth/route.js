@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 const User = require("../models/User.model");
 const fetchuser = require("../middlewares/fetchuser");
 require("dotenv").config();
@@ -74,7 +75,7 @@ router.post("/login", async (req, res) => {
     const { id, secret } = req.body;
 
     if (!id || !secret) {
-        console.log(id, secret);
+      console.log(id, secret);
       return res.status(400).json({ error: "ID and Secret are required" });
     }
 
@@ -153,5 +154,34 @@ router.get("/profile", fetchuser, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// ROUTE 5: Google OAuth - GET /api/auth/google
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+);
+
+// ROUTE 6: Google OAuth Callback - GET /api/auth/google/callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/auth" }),
+  (req, res) => {
+    try {
+      // Generate JWT tokens for the authenticated user
+      const { accessToken, refreshToken } = generateTokens(req.user.id);
+
+      // Redirect to frontend with tokens in URL params
+      const clientURL = process.env.CLIENT_URL || "http://localhost:5173";
+      res.redirect(
+        `${clientURL}/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`,
+      );
+    } catch (error) {
+      console.error("Google OAuth callback error:", error.message);
+      res.redirect(
+        `${process.env.CLIENT_URL || "http://localhost:5173"}/auth?error=oauth_failed`,
+      );
+    }
+  },
+);
 
 module.exports = router;
