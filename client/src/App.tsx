@@ -4,6 +4,7 @@ import TargetCursor from "./components/Cursor";
 import SelectSemester from "./pages/SelectSemester";
 import SelectSubject from "./pages/SelectSubject";
 import ChatPage from "./pages/ChatPage";
+import AuthPage from "./pages/AuthPage";
 import "./App.css";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/select-semester" element={<SelectSemester />} />
         <Route path="/select-subject/:semesterId" element={<SelectSubject />} />
         <Route path="/chat/:subjectId" element={<ChatPage />} />
+        <Route path="/auth" element={<AuthPage />} />
       </Routes>
     </>
   );
