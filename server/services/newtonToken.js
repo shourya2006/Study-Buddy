@@ -95,24 +95,15 @@ async function ensureToken() {
 }
 
 async function initNewtonTokenCron() {
-  // Fetch token on startup if not available
-  const valid = await isTokenValid();
-  if (!valid) {
-    console.log("[Newton Token] No valid token on startup, fetching...");
-    await fetchNewtonToken();
-  } else {
-    const tokenDoc = await NewtonToken.findOne({ key: TOKEN_KEY });
-    console.log(
-      "[Newton Token] ✅ Valid token found in DB, expires:",
-      tokenDoc.expiresAt,
-    );
-  }
+  // ALWAYS fetch token on startup (not just when invalid)
+  console.log("[Newton Token] 🔄 Fetching fresh token on startup...");
+  await fetchNewtonToken();
 
-  // Schedule cron job for 12:00 AM IST
+  // Schedule cron job for 12:00 AM IST - ALWAYS fetch fresh
   cron.schedule(
     "0 0 * * *",
     async () => {
-      console.log("[Newton Token] ⏰ Midnight IST token refresh");
+      console.log("[Newton Token] ⏰ Midnight IST - Fetching fresh token");
       await fetchNewtonToken();
     },
     {

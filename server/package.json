@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@pinecone-database/pinecone": "^7.0.0",
     "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -21,7 +22,9 @@
     "mongoose": "^9.1.5",
     "node-cron": "^4.2.1",
     "nodemon": "^3.1.11",
+    "openai": "^6.17.0",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "pdfjs-dist": "^5.4.624"
   }
 }

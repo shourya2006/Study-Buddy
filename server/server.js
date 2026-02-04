@@ -42,9 +42,14 @@ app.use(passport.session());
 // Initialize Newton Token Cron Job
 initNewtonTokenCron();
 
+// Initialize Auto Sync (runs on startup + 12am IST daily)
+const { initAutoSync } = require("./services/autoSync");
+initAutoSync();
+
 // Routes
 app.use("/api/auth", require("./auth/route"));
 app.use("/api/courses", require("./courses/route"));
+app.use("/api/sync", require("./sync/route"));
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
