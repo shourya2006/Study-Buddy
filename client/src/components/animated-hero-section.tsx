@@ -454,7 +454,10 @@ export function AnimatedHeroSection() {
       />
 
       <button
-        onClick={() => navigate("/select-semester")}
+        onClick={() => {
+          const isAuth = localStorage.getItem("accessToken");
+          navigate(isAuth ? "/select-semester" : "/auth");
+        }}
         className="cursor-target absolute bottom-20 left-1/2 transform -translate-x-1/2 
                    font-mono font-bold text-xl uppercase tracking-widest
                    text-white bg-transparent border-4 border-white

@@ -154,10 +154,22 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-white/10 bg-white/5 text-[9px] text-white/20 text-center flex flex-col gap-1">
-          <span>SECURE_CONNECTION_ESTABLISHED</span>
-          <span className="text-green-900/40">ENCRYPTED::AES-256</span>
+        {/* Sidebar Footer - Logout */}
+        <div className="p-4 border-t border-white/10 bg-white/5">
+          <button
+            onClick={() => {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("isAuthenticated");
+              navigate("/");
+            }}
+            className="cursor-target w-full py-3 bg-red-500/10 border border-red-500/30 text-red-500 text-xs tracking-widest font-bold hover:bg-red-500 hover:text-black hover:border-red-500 transition-all duration-200 flex items-center justify-center gap-2 group"
+          >
+            <span className="group-hover:translate-x-1 transition-transform">
+              &gt;&gt;
+            </span>
+            LOGOUT
+          </button>
         </div>
       </div>
     </div>

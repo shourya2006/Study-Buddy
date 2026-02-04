@@ -1,23 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { authApi } from "../services/authApi";
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [id, setId] = useState("");
   const [secret, setSecret] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleAuth = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (authApi.isAuthenticated()) {
+      navigate("/select-semester", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock Authentication Logic
-    // In a real app, this would verify credentials with the backend
+    setError("");
 
-    if (id && secret) {
-      localStorage.setItem("isAuthenticated", "true");
-      // Simulate processing delay for effect
-      setTimeout(() => {
+    if (!id || !secret) {
+      setError("ID and Secret are required");
+      return;
+    }
+
+    if (secret.length < 6) {
+      setError("Secret must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = isLogin
+        ? await authApi.login(id, secret)
+        : await authApi.register(id, secret);
+
+      if (response.success && response.accessToken && response.refreshToken) {
+        authApi.saveTokens(response.accessToken, response.refreshToken);
         navigate("/select-semester");
-      }, 800);
+      } else {
+        setError(response.error || "Authentication failed");
+      }
+    } catch (err) {
+      setError("Connection failed. Is the server running?");
+      console.error("Auth error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,12 +134,27 @@ const AuthPage: React.FC = () => {
               />
             </div>
 
+            {error && (
+              <div className="text-red-500 text-xs tracking-wider border border-red-500/30 bg-red-500/10 p-3 text-center">
+                ERROR: {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="cursor-target w-full bg-white text-black py-4 mt-4 font-bold tracking-[0.2em] hover:bg-green-500 hover:text-black transition-colors relative overflow-hidden group/btn"
+              disabled={loading}
+              className={`cursor-target w-full py-4 mt-4 font-bold tracking-[0.2em] relative overflow-hidden group/btn transition-colors ${
+                loading
+                  ? "bg-white/50 text-black/50 cursor-wait"
+                  : "bg-white text-black hover:bg-green-500 hover:text-black"
+              }`}
             >
               <span className="relative z-10">
-                {isLogin ? "AUTHENTICATE" : "INITIALIZE_PROFILE"} &gt;
+                {loading
+                  ? "PROCESSING..."
+                  : isLogin
+                    ? "AUTHENTICATE >"
+                    : "INITIALIZE_PROFILE >"}
               </span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
             </button>
