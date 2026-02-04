@@ -277,7 +277,57 @@ const ChatPage: React.FC = () => {
               >
                 {msg.role === "assistant" ? (
                   <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:p-3">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({
+                          node,
+                          inline,
+                          className,
+                          children,
+                          ...props
+                        }: any) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          const [copied, setCopied] = React.useState(false);
+
+                          const handleCopy = () => {
+                            navigator.clipboard.writeText(
+                              String(children).replace(/\n$/, ""),
+                            );
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          };
+
+                          return !inline && match ? (
+                            <div className="relative group rounded-sm overflow-hidden my-4 border border-white/10 bg-black/40">
+                              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+                                <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">
+                                  {match[1]}
+                                </span>
+                                <button
+                                  onClick={handleCopy}
+                                  className="text-[10px] tracking-widest text-green-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-green-400"
+                                >
+                                  {copied ? "COPIED!" : "COPY_CODE"}
+                                </button>
+                              </div>
+                              <div className="p-4 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                <code
+                                  className={`${className} !bg-transparent !p-0`}
+                                  {...props}
+                                >
+                                  {children}
+                                </code>
+                              </div>
+                            </div>
+                          ) : (
+                            <code className={`${className}`} {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                      }}
+                    >
                       {msg.content}
                     </ReactMarkdown>
                   </div>
@@ -298,7 +348,57 @@ const ChatPage: React.FC = () => {
               <div className="bg-white/5 border border-white/10 p-4 rounded-sm max-w-2xl">
                 {streamingContent ? (
                   <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:p-3">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({
+                          node,
+                          inline,
+                          className,
+                          children,
+                          ...props
+                        }: any) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          const [copied, setCopied] = React.useState(false);
+
+                          const handleCopy = () => {
+                            navigator.clipboard.writeText(
+                              String(children).replace(/\n$/, ""),
+                            );
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          };
+
+                          return !inline && match ? (
+                            <div className="relative group rounded-sm overflow-hidden my-4 border border-white/10 bg-black/40">
+                              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+                                <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">
+                                  {match[1]}
+                                </span>
+                                <button
+                                  onClick={handleCopy}
+                                  className="text-[10px] tracking-widest text-green-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-green-400"
+                                >
+                                  {copied ? "COPIED!" : "COPY_CODE"}
+                                </button>
+                              </div>
+                              <div className="p-4 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                <code
+                                  className={`${className} !bg-transparent !p-0`}
+                                  {...props}
+                                >
+                                  {children}
+                                </code>
+                              </div>
+                            </div>
+                          ) : (
+                            <code className={`${className}`} {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                      }}
+                    >
                       {streamingContent}
                     </ReactMarkdown>
                     <span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1" />
