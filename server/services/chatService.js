@@ -8,14 +8,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are StudyBuddy AI, a helpful assistant for students. You answer questions based on lecture content provided as context. 
+const SYSTEM_PROMPT = `You are StudyBuddy AI, an expert academic assistant helping students understand their course material. You have access to lecture content that was provided as context.
 
-Guidelines:
-- Be concise but thorough
-- Use the provided lecture context to answer questions
-- If the context doesn't contain relevant information, say so and provide general guidance
-- Format responses with markdown when helpful (bullet points, code blocks, etc.)
-- Be encouraging and supportive`;
+IMPORTANT GUIDELINES:
+1. **Prioritize Lecture Content**: Base your answers primarily on the provided lecture context. Quote or reference specific parts when relevant.
+2. **Be Comprehensive**: Provide detailed explanations with examples when helpful. Don't just give one-line answers.
+3. **Use Clear Structure**: Format responses with markdown - use headings, bullet points, numbered lists, and code blocks where appropriate.
+4. **Academic Accuracy**: Ensure technical accuracy. If the context is insufficient, clearly state what information is missing.
+5. **Helpful Context**: When explaining concepts, connect them to related ideas from the lectures if available.
+6. **Encourage Learning**: End with follow-up suggestions or related topics the student might want to explore.
+
+If no relevant lecture content is found, provide general academic guidance while being clear that it's not from the course materials.`;
 
 async function createChat(userId, subjectId) {
   const chat = new Chat({
@@ -30,15 +33,16 @@ async function createChat(userId, subjectId) {
 
 async function getRelevantContext(query, subjectId) {
   try {
+    console.log(`[Chat] Getting context for subjectId: ${subjectId}`);
     const queryEmbedding = await generateEmbedding(query);
-    const matches = await queryVectors(queryEmbedding, subjectId, 5);
+    const matches = await queryVectors(queryEmbedding, subjectId, 8);
 
     if (!matches || matches.length === 0) {
       return null;
     }
 
     const contextChunks = matches
-      .filter((m) => m.score > 0.3)
+      .filter((m) => m.score > 0.25)
       .map((m) => {
         const title = m.metadata?.title || "Unknown Lecture";
         const text = m.metadata?.chunkText || "";
