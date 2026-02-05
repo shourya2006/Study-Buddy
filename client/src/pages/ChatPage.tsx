@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { coursesApi, type Subject } from "../services/coursesApi";
 import { chatApi, type Message, type ChatPreview } from "../services/chatApi";
 
@@ -241,6 +244,34 @@ const ChatPage: React.FC = () => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const preprocessLaTeX = (content: string) => {
+    // 1. Replace block math \[ ... \] with $$ ... $$
+    let processed = content.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
+
+    // 2. Replace inline math \( ... \) with $ ... $
+    processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, "$$ $1 $$");
+
+    // 3. Handle weird "backslash space paren" e.g. \ ( ... \ )
+    processed = processed.replace(/\\ \(/g, "$ (").replace(/\\ \)/g, ") $");
+
+    // 4. Heuristic: Wrap math-like parenthesized expressions containing backslashes
+    // e.g. ( p \rightarrow q ) -> $ ( p \rightarrow q ) $
+    processed = processed.replace(
+      /(\([^\n$]*?\\[a-zA-Z]+[^\n$]*?\))/g,
+      (match) => {
+        // Double check not already wrapped
+        if (
+          (match.startsWith("$") || match.startsWith(" $")) &&
+          (match.endsWith("$") || match.endsWith("$ "))
+        )
+          return match;
+        return ` $ ${match} $ `;
+      },
+    );
+
+    return processed;
+  };
+
   return (
     <div className="flex h-screen bg-black text-white font-mono overflow-hidden relative">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
@@ -306,7 +337,11 @@ const ChatPage: React.FC = () => {
                 {msg.role === "assistant" ? (
                   <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:p-3">
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[
+                        [remarkMath, { singleDollarTextMath: true }],
+                        remarkGfm,
+                      ]}
+                      rehypePlugins={[rehypeKatex]}
                       components={{
                         code({
                           node,
@@ -356,7 +391,7 @@ const ChatPage: React.FC = () => {
                         },
                       }}
                     >
-                      {msg.content}
+                      {preprocessLaTeX(msg.content)}
                     </ReactMarkdown>
                   </div>
                 ) : (
@@ -377,7 +412,11 @@ const ChatPage: React.FC = () => {
                 {streamingContent ? (
                   <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-3 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-white/10 prose-pre:p-3">
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[
+                        [remarkMath, { singleDollarTextMath: true }],
+                        remarkGfm,
+                      ]}
+                      rehypePlugins={[rehypeKatex]}
                       components={{
                         code({
                           node,
@@ -427,7 +466,7 @@ const ChatPage: React.FC = () => {
                         },
                       }}
                     >
-                      {streamingContent}
+                      {preprocessLaTeX(streamingContent)}
                     </ReactMarkdown>
                     <span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1" />
                   </div>
