@@ -31,6 +31,24 @@ export interface Topic {
   processedAt: string;
 }
 
+export interface VideoRec {
+  videoId: string;
+  title: string;
+  description: string;
+  channelTitle: string;
+  thumbnail: string;
+  url: string;
+  similarityScore: number;
+  subtopicsUsed: string[];
+}
+
+export interface TopicRecommendation {
+  topicTitle: string;
+  courseName: string;
+  recommendations: VideoRec[];
+  lastUpdated: string;
+}
+
 interface ChatResponse {
   success: boolean;
   chat?: Chat;
@@ -58,6 +76,13 @@ interface MessageResponse {
 
 interface DeleteResponse {
   success: boolean;
+  error?: string;
+}
+
+interface RecommendationsResponse {
+  success: boolean;
+  subjectId?: string;
+  recommendations?: TopicRecommendation[];
   error?: string;
 }
 
@@ -104,5 +129,9 @@ export const chatApi = {
 
   async deleteChat(chatId: string): Promise<DeleteResponse> {
     return apiClient.delete<DeleteResponse>(`${API_BASE}/api/chat/${chatId}`);
+  },
+
+  async getRecommendations(subjectId: string): Promise<RecommendationsResponse> {
+    return apiClient.get<RecommendationsResponse>(`${API_BASE}/api/chat/recommendations/${subjectId}`);
   },
 };

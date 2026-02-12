@@ -10,6 +10,9 @@ const {
   renameChat,
   deleteChat,
 } = require("../services/chatService");
+const {
+  getRecommendationsForSubject,
+} = require("../services/recommendationCacheService");
 
 router.post("/new", fetchuser, async (req, res) => {
   try {
@@ -237,6 +240,28 @@ router.delete("/:chatId", fetchuser, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
     res.status(500).json({ error: "Failed to delete chat" });
+  }
+});
+
+router.get("/recommendations/:subjectId", fetchuser, async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+    const results = await getRecommendationsForSubject(subjectId);
+
+    res.json({
+      success: true,
+      subjectId,
+      recommendations: results,
+    });
+  } catch (error) {
+    console.error("[Chat API] Recommendations error:", error.message);
+    if (error.code === "ECONNREFUSED") {
+      return res.status(503).json({
+        success: false,
+        error: "Recommendation service is not running",
+      });
+    }
+    res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
 

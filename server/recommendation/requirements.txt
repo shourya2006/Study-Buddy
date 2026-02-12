@@ -1,0 +1,9 @@
+fastapi==0.115.8
+uvicorn==0.34.0
+scikit-learn==1.6.1
+pymongo==4.12.1
+google-api-python-client==2.166.0
+python-dotenv==1.1.0
+numpy==2.2.3
+pinecone==6.0.2
+openai==1.82.0

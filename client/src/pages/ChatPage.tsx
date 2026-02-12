@@ -11,6 +11,7 @@ import {
   type Message,
   type ChatPreview,
   type Topic,
+  type TopicRecommendation,
 } from "../services/chatApi";
 
 const ChatPage: React.FC = () => {
@@ -35,6 +36,12 @@ const ChatPage: React.FC = () => {
   const [showTabMenu, setShowTabMenu] = useState(false);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+  const [expandedTopic, setExpandedTopic] = useState<number | null>(null);
+  const [recommendations, setRecommendations] = useState<TopicRecommendation[]>(
+    [],
+  );
+  const [recsLoading, setRecsLoading] = useState(false);
+  const [recsFetched, setRecsFetched] = useState(false);
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -93,6 +100,25 @@ const ChatPage: React.FC = () => {
     };
     fetchTopics();
   }, [subjectId, sidebarTab]);
+
+  useEffect(() => {
+    const fetchRecs = async () => {
+      if (!subjectId || sidebarTab !== "topics" || recsFetched) return;
+      setRecsLoading(true);
+      try {
+        const response = await chatApi.getRecommendations(subjectId);
+        if (response.success && response.recommendations) {
+          setRecommendations(response.recommendations);
+        }
+        setRecsFetched(true);
+      } catch (err) {
+        console.error("Error fetching recommendations:", err);
+      } finally {
+        setRecsLoading(false);
+      }
+    };
+    fetchRecs();
+  }, [subjectId, sidebarTab, recsFetched]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -712,33 +738,94 @@ const ChatPage: React.FC = () => {
           )}
 
           {sidebarTab === "topics" && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {topicsLoading ? (
                 <div className="text-center text-white/40 text-xs py-8">
                   Loading topics...
                 </div>
               ) : topics.length > 0 ? (
-                topics.map((topic, index) => (
-                  <div
-                    key={index}
-                    className="group relative p-3 border border-white/10 hover:border-green-500/30 hover:bg-white/5 transition-all duration-200"
-                  >
-                    <div className="mb-1">
-                      <span className="text-[10px] text-green-500/50 group-hover:text-green-400 font-bold">
-                        TOPIC_{(index + 1).toString().padStart(3, "0")}
-                      </span>
+                topics.map((topic, index) => {
+                  const isExpanded = expandedTopic === index;
+                  const topicRecs = recommendations.find(
+                    (r) => r.topicTitle === topic.title,
+                  );
+                  const videos = topicRecs?.recommendations || [];
+
+                  return (
+                    <div key={index}>
+                      <button
+                        onClick={() =>
+                          setExpandedTopic(isExpanded ? null : index)
+                        }
+                        className={`cursor-target w-full text-left group relative p-3 border transition-all duration-200 ${
+                          isExpanded
+                            ? "border-green-500/30 bg-green-500/5"
+                            : "border-white/10 hover:border-green-500/30 hover:bg-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-green-500/50 group-hover:text-green-400 font-bold">
+                            TOPIC_{(index + 1).toString().padStart(3, "0")}
+                          </span>
+                          <span
+                            className={`text-[10px] text-green-500/50 transition-transform duration-200 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          >
+                            ▼
+                          </span>
+                        </div>
+                        <div className="text-xs text-white/70 group-hover:text-white font-medium leading-relaxed">
+                          {topic.title}
+                        </div>
+                        {topic.courseName && (
+                          <div className="text-[10px] text-white/30 mt-1">
+                            {topic.courseName}
+                          </div>
+                        )}
+                        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-green-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-x border-b border-green-500/20 bg-green-500/5 p-2 space-y-2">
+                          {recsLoading ? (
+                            <div className="text-center text-white/30 text-[10px] py-3">
+                              Loading recommendations...
+                            </div>
+                          ) : videos.length > 0 ? (
+                            videos.map((video) => (
+                              <a
+                                key={video.videoId}
+                                href={video.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block group/video border border-white/10 hover:border-green-500/40 transition-all duration-200 bg-black/30 hover:bg-black/50 overflow-hidden"
+                              >
+                                <img
+                                  src={video.thumbnail}
+                                  alt={video.title}
+                                  className="w-full h-28 object-cover"
+                                />
+                                <div className="p-2">
+                                  <div className="text-[11px] text-white/80 group-hover/video:text-white font-medium leading-snug line-clamp-2">
+                                    {video.title}
+                                  </div>
+                                  <div className="text-[9px] text-green-500/60 mt-1 tracking-wider">
+                                    {video.channelTitle}
+                                  </div>
+                                </div>
+                              </a>
+                            ))
+                          ) : (
+                            <div className="text-center text-white/20 text-[10px] py-3">
+                              No videos available yet.
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-white/70 group-hover:text-white font-medium leading-relaxed">
-                      {topic.title}
-                    </div>
-                    {topic.courseName && (
-                      <div className="text-[10px] text-white/30 mt-1">
-                        {topic.courseName}
-                      </div>
-                    )}
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-green-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center text-white/20 text-xs py-8">
                   No topics available for this subject.

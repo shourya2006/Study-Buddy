@@ -1,113 +1,86 @@
-# Vortex
+# StudyBuddy (Vortex) Project Summary
 
-Vortex is an advanced AI-powered study assistant designed to help students learn more effectively. It combines a modern chat interface with powerful document processing capabilities to answer questions, solve math problems, and assist with study materials.
+## 1. Overview
 
-## 🚀 Features
+**StudyBuddy** (also referred to as **Vortex**) is an AI-powered educational platform designed to act as a personalized study companion for students. It leverages Retrieval Augmented Generation (RAG) to provide accurate, textbook-sourced answers and now includes intelligent video recommendations to supplement learning.
 
-- **AI Chat Interface**: Interactive chat with support for Markdown and mathematical (LaTeX) rendering.
-- **Document Analysis**: Upload study materials (PDFs, Office docs) for analysis and RAG (Retrieval-Augmented Generation) powered answers.
-- **Math Support**: Renders complex mathematical equations using KaTeX.
-- **Microservices Architecture**: Separate services for the main application logic and document processing.
+## 2. Technical Architecture
 
-## 🛠️ Tech Stack
+The project follows a **Microservices-lite** architecture:
 
-### Frontend (`client/`)
+- **Frontend**: Single Page Application (SPA) built with React & Vite.
+- **Backend (Main)**: Node.js/Express REST API handling auth, data, and chat logic.
+- **Backend (Intelligence)**: Python/FastAPI service for heavy ML tasks (RAG, Embeddings, Recommendations).
+- **Database**: MongoDB (Primary Data) and Pinecone (Vector Data).
 
-- **Framework**: React 19 + Vite
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: GSAP
-- **Rendering**: React Markdown, Remark/Rehype plugins (Math, KaTeX)
+```mermaid
+graph TD
+    User[User] -->|Interacts| Client[React Client]
+    Client -->|REST API| NodeServer[Node.js Server]
 
-### Backend (`server/`)
+    subgraph Data Layer
+        NodeServer -->|Reads/Writes| MongoDB[(MongoDB)]
+        NodeServer -->|Vectors| Pinecone[(Pinecone)]
+    end
 
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (Mongoose)
-- **Authentication**: JWT, Passport (Google OAuth)
-- **AI Integration**: OpenAI API, Pinecone Vector Database
+    subgraph Intelligence Layer
+        NodeServer -->|Relays Requests| PythonService[Python Microservice]
+        PythonService -->|Context Search| Pinecone
+        PythonService -->|LLM| OpenAI[OpenAI API]
+        PythonService -->|Search| YouTube[YouTube API]
+    end
 
-### Upload Platform (`upload-platform/`)
-
-- **Purpose**: Dedicated microservice for processing and indexing documents.
-- **Stack**: Node.js, Express, Multer, OfficeParser, PDF.js
-
-## 📂 Project Structure
-
-```bash
-StudyBuddy/
-├── client/            # Frontend application
-├── server/            # Main backend API and authentication
-└── upload-platform/   # Service for document parsing and embedding
+    PythonService -->|Returns Analysis| NodeServer
+    NodeServer -->|JSON Response| Client
 ```
 
-## 🏁 Getting Started
+## 3. Tech Stack
 
-### Prerequisites
+| Component      | Technology               | Key Libraries                                                                                |
+| -------------- | ------------------------ | -------------------------------------------------------------------------------------------- |
+| **Frontend**   | React (TypeScript), Vite | `react-router-dom`, `tailwindcss`, `framer-motion`, `gsap`, `katex` (Math), `react-markdown` |
+| **Backend**    | Node.js, Express         | `mongoose`, `passport` (Auth), `node-cron` (Automation), `multer`, `pdf-parse`               |
+| **ML Service** | Python, FastAPI          | `scikit-learn` (TF-IDF), `pinecone-client`, `openai`, `google-api-python-client`             |
+| **Database**   | MongoDB, Pinecone        | `mongoose`                                                                                   |
+| **Infra**      | -                        | `dotenv` (Config), `nodemon`                                                                 |
 
-- Node.js (v18+ recommended)
-- MongoDB installed locally or a MongoDB Atlas URI
-- API Keys for OpenAI and Pinecone
+## 4. Key Features
 
-### Installation & Setup
+### 🎓 Intelligent Chat (RAG)
 
-1.  **Clone the repository**
+- **Contextual Answers**: Chatbot answers questions based _only_ on uploaded course materials (textbooks, PDFs), reducing hallucinations.
+- **Vector Search**: Uses OpenAI embeddings and Pinecone to find relevant textbook chunks.
+- **Math Support**: Renders complex mathematical formulas using LaTeX/KaTeX.
 
-    ```bash
-    git clone <repository-url>
-    cd StudyBuddy
-    ```
+### 📺 Video Recommendations (New!)
 
-2.  **Setup Client**
+- **Smart Suggestions**: Automatically suggests relevant YouTube tutorials for each syllabus topic.
+- **Advanced Search**: Uses RAG to extract subtopics from the textbook to refine YouTube search queries (e.g., "Graph Theory" -> "Graph Theory BFS DFS implementation").
+- **Caching**: Recommendations are cached in MongoDB and refreshed daily (12:00 AM IST) or on startup.
 
-    ```bash
-    cd client
-    npm install
-    cp .env.example .env # Configure your environment variables
-    ```
+### 📂 Course & Content Management
 
-3.  **Setup Server**
+- **PDF Parsing**: Robust pipeline to parse, chunk, and embed PDFs (including OCR for scanned docs).
+- **Topic Extraction**: Automatically extracts and organizes topics from course materials.
 
-    ```bash
-    cd ../server
-    npm install
-    # Create a .env file with: PORT, MONGO_URI, JWT_SECRET, OPENAI_API_KEY, PINECONE_API_KEY, etc.
-    ```
+### 🔐 Authentication & Security
 
-4.  **Setup Upload Platform**
-    ```bash
-    cd ../upload-platform
-    npm install
-    # Create a .env file with necessary API keys and config.
-    ```
+- **OAuth & Local**: Google OAuth integration via Passport.js.
+- **Session Management**: Secure session handling with MongoDB storage.
 
-## 🏃 Running the Application
+## 5. Recent Core Update: Video Recommendations
 
-To run the full stack, you will need to start each service in a separate terminal:
+_Implemented Feb 2026_
 
-**1. Start the Backend Server**
+- **Objective**: Supplement text answers with visual learning resources.
+- **Implementation**:
+  - Created `recommendationCacheService` in Node to manage data.
+  - Built Python `recommender.py` for intelligent query generation.
+  - Added automation via `node-cron` for background updates.
+- **Status**: Fully functional. Gracefully handles API quota limits.
 
-```bash
-cd server
-npm start # or npm run dev
-```
+## 6. Future Roadmap (Suggested)
 
-**2. Start the Upload Service**
-
-```bash
-cd upload-platform
-node server.js # or npm start
-```
-
-**3. Start the Frontend Client**
-
-```bash
-cd client
-npm run dev
-```
-
-Visit `http://localhost:5173` (or the port shown in your terminal) to use the application.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- **User Progress Tracking**: Analytics on topics studied and videos watched.
+- **Interactive Quizzes**: Generate quizzes from the RAG context.
+- **Mobile Responsiveness**: Further optimizations for mobile view.

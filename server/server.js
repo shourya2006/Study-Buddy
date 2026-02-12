@@ -42,6 +42,36 @@ initNewtonTokenCron();
 const { initAutoSync } = require("./services/autoSync");
 initAutoSync();
 
+const cron = require("node-cron");
+const { refreshAllSubjects } = require("./services/recommendationCacheService");
+
+function initRecommendationSync() {
+  // 1. Run on startup after a delay (to let autoSync finish or DB connect)
+  console.log("[VideoRec] Will check for new topics in 30 seconds...");
+  setTimeout(() => {
+    refreshAllSubjects().catch((err) =>
+      console.error("[VideoRec] Startup refresh error:", err.message),
+    );
+  }, 30000);
+
+  // 2. Schedule daily at 12:00 AM IST
+  cron.schedule(
+    "0 0 * * *",
+    () => {
+      console.log("[Cron] 12:00 AM IST — Refreshing video recommendations...");
+      refreshAllSubjects().catch((err) =>
+        console.error("[Cron] Refresh error:", err.message),
+      );
+    },
+    {
+      timezone: "Asia/Kolkata",
+    },
+  );
+  console.log("[VideoRec] Scheduled daily refresh at 12:00 AM IST");
+}
+
+initRecommendationSync();
+
 app.use("/api/auth", require("./auth/route"));
 app.use("/api/courses", require("./courses/route"));
 app.use("/api/sync", require("./sync/route"));
