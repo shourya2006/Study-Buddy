@@ -25,6 +25,12 @@ export interface ChatPreview {
   preview: string;
 }
 
+export interface Topic {
+  title: string;
+  courseName: string;
+  processedAt: string;
+}
+
 interface ChatResponse {
   success: boolean;
   chat?: Chat;
@@ -34,6 +40,12 @@ interface ChatResponse {
 interface ChatsResponse {
   success: boolean;
   chats?: ChatPreview[];
+  error?: string;
+}
+
+interface TopicsResponse {
+  success: boolean;
+  topics?: Topic[];
   error?: string;
 }
 
@@ -76,6 +88,10 @@ export const chatApi = {
 
   async getChats(subjectId: string): Promise<ChatsResponse> {
     return apiClient.get<ChatsResponse>(`${API_BASE}/api/chat/list/${subjectId}`);
+  },
+
+  async getTopics(subjectId: string): Promise<TopicsResponse> {
+    return apiClient.get<TopicsResponse>(`${API_BASE}/api/chat/topics/${subjectId}`);
   },
 
   async getChat(chatId: string): Promise<ChatResponse> {

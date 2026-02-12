@@ -6,7 +6,12 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { coursesApi, type Subject } from "../services/coursesApi";
-import { chatApi, type Message, type ChatPreview } from "../services/chatApi";
+import {
+  chatApi,
+  type Message,
+  type ChatPreview,
+  type Topic,
+} from "../services/chatApi";
 
 const ChatPage: React.FC = () => {
   const { semesterId, subjectId } = useParams();
@@ -26,6 +31,10 @@ const ChatPage: React.FC = () => {
   const [streamingContent, setStreamingContent] = useState("");
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [sidebarTab, setSidebarTab] = useState<"chats" | "topics">("chats");
+  const [showTabMenu, setShowTabMenu] = useState(false);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -66,6 +75,24 @@ const ChatPage: React.FC = () => {
     };
     fetchChats();
   }, [subjectId]);
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      if (!subjectId || sidebarTab !== "topics") return;
+      setTopicsLoading(true);
+      try {
+        const response = await chatApi.getTopics(subjectId);
+        if (response.success && response.topics) {
+          setTopics(response.topics);
+        }
+      } catch (err) {
+        console.error("Error fetching topics:", err);
+      } finally {
+        setTopicsLoading(false);
+      }
+    };
+    fetchTopics();
+  }, [subjectId, sidebarTab]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -571,75 +598,154 @@ const ChatPage: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          <label className="block text-[10px] text-white/30 mb-6 tracking-[0.2em] uppercase border-b border-white/5 pb-2">
-            Session_Logs
-          </label>
-          <div className="space-y-1">
-            {chatHistory.map((chat, index) => (
-              <div
-                role="button"
-                tabIndex={0}
-                key={chat.id}
-                onClick={() => loadChat(chat.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    loadChat(chat.id);
-                  }
-                }}
-                className={`cursor-target w-full text-left group relative p-3 border transition-all duration-200 ${
-                  currentChatId === chat.id
-                    ? "border-green-500/30 bg-green-500/10"
-                    : "border-transparent hover:border-white/10 hover:bg-white/5"
-                }`}
+          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-2">
+            <label className="block text-[10px] text-white/30 tracking-[0.2em] uppercase">
+              {sidebarTab === "chats" ? "Session_Logs" : "Topics_to_Learn"}
+            </label>
+            <div className="relative">
+              <button
+                onClick={() => setShowTabMenu(!showTabMenu)}
+                className="cursor-target text-white/40 hover:text-white text-sm transition-colors"
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-green-500/50 group-hover:text-green-400 font-bold">
-                    LOG_{(index + 1).toString().padStart(3, "0")}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-white/20">
-                      {formatDate(chat.updatedAt)}
+                ⋮
+              </button>
+              {showTabMenu && (
+                <div className="absolute right-0 top-6 bg-black border border-white/20 shadow-lg z-50 min-w-[120px]">
+                  <button
+                    onClick={() => {
+                      setSidebarTab("chats");
+                      setShowTabMenu(false);
+                    }}
+                    className={`cursor-target w-full text-left px-4 py-2 text-xs tracking-widest hover:bg-white/10 transition-colors ${
+                      sidebarTab === "chats"
+                        ? "text-green-500 bg-white/5"
+                        : "text-white/70"
+                    }`}
+                  >
+                    CHATS
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSidebarTab("topics");
+                      setShowTabMenu(false);
+                    }}
+                    className={`cursor-target w-full text-left px-4 py-2 text-xs tracking-widest hover:bg-white/10 transition-colors ${
+                      sidebarTab === "topics"
+                        ? "text-green-500 bg-white/5"
+                        : "text-white/70"
+                    }`}
+                  >
+                    TOPICS
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {sidebarTab === "chats" && (
+            <div className="space-y-1">
+              {chatHistory.map((chat, index) => (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  key={chat.id}
+                  onClick={() => loadChat(chat.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      loadChat(chat.id);
+                    }
+                  }}
+                  className={`cursor-target w-full text-left group relative p-3 border transition-all duration-200 ${
+                    currentChatId === chat.id
+                      ? "border-green-500/30 bg-green-500/10"
+                      : "border-transparent hover:border-white/10 hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-green-500/50 group-hover:text-green-400 font-bold">
+                      LOG_{(index + 1).toString().padStart(3, "0")}
                     </span>
-                    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                      <button
-                        onClick={(e) => startEditing(chat.id, chat.title, e)}
-                        className="text-green-500/50 hover:text-green-500 text-[10px]"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        onClick={(e) => deleteChat(chat.id, e)}
-                        className="text-red-500/50 hover:text-red-500 text-[10px]"
-                      >
-                        ✕
-                      </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-white/20">
+                        {formatDate(chat.updatedAt)}
+                      </span>
+                      <div className="flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                        <button
+                          onClick={(e) => startEditing(chat.id, chat.title, e)}
+                          className="text-green-500/50 hover:text-green-500 text-[10px]"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={(e) => deleteChat(chat.id, e)}
+                          className="text-red-500/50 hover:text-red-500 text-[10px]"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
                   </div>
+                  {editingChatId === chat.id ? (
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onBlur={() => saveTitle(chat.id)}
+                      onKeyDown={(e) => e.key === "Enter" && saveTitle(chat.id)}
+                      className="w-full bg-black/50 border border-green-500/50 text-white text-xs p-1 outline-none font-medium"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="text-xs text-white/60 group-hover:text-white truncate font-medium">
+                      {chat.title}
+                    </div>
+                  )}
+                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-green-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
                 </div>
-                {editingChatId === chat.id ? (
-                  <input
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    onBlur={() => saveTitle(chat.id)}
-                    onKeyDown={(e) => e.key === "Enter" && saveTitle(chat.id)}
-                    className="w-full bg-black/50 border border-green-500/50 text-white text-xs p-1 outline-none font-medium"
-                    autoFocus
-                  />
-                ) : (
-                  <div className="text-xs text-white/60 group-hover:text-white truncate font-medium">
-                    {chat.title}
+              ))}
+              {chatHistory.length === 0 && !loading && (
+                <div className="text-center text-white/20 text-xs py-4">
+                  No chats yet. Create one!
+                </div>
+              )}
+            </div>
+          )}
+
+          {sidebarTab === "topics" && (
+            <div className="space-y-2">
+              {topicsLoading ? (
+                <div className="text-center text-white/40 text-xs py-8">
+                  Loading topics...
+                </div>
+              ) : topics.length > 0 ? (
+                topics.map((topic, index) => (
+                  <div
+                    key={index}
+                    className="group relative p-3 border border-white/10 hover:border-green-500/30 hover:bg-white/5 transition-all duration-200"
+                  >
+                    <div className="mb-1">
+                      <span className="text-[10px] text-green-500/50 group-hover:text-green-400 font-bold">
+                        TOPIC_{(index + 1).toString().padStart(3, "0")}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/70 group-hover:text-white font-medium leading-relaxed">
+                      {topic.title}
+                    </div>
+                    {topic.courseName && (
+                      <div className="text-[10px] text-white/30 mt-1">
+                        {topic.courseName}
+                      </div>
+                    )}
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-green-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
                   </div>
-                )}
-                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-green-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
-              </div>
-            ))}
-            {chatHistory.length === 0 && !loading && (
-              <div className="text-center text-white/20 text-xs py-4">
-                No chats yet. Create one!
-              </div>
-            )}
-          </div>
+                ))
+              ) : (
+                <div className="text-center text-white/20 text-xs py-8">
+                  No topics available for this subject.
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-white/10 bg-white/5">

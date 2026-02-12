@@ -116,6 +116,49 @@ router.get("/list/:subjectId", fetchuser, async (req, res) => {
   }
 });
 
+router.get("/topics/:subjectId", fetchuser, async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+    const ProcessedLecture = require("../models/ProcessedLecture.model");
+
+    const lectures = await ProcessedLecture.find({ subjectId })
+      .select("title courseName processedAt")
+      .sort({ processedAt: -1 })
+      .lean();
+
+    const filteredLectures = lectures.filter(
+      (l) => !l.title.includes("Course and Instructor Introduction"),
+    );
+
+    const groupedByDate = {};
+    filteredLectures.forEach((lecture) => {
+      const date = new Date(lecture.processedAt).toDateString();
+      if (!groupedByDate[date]) {
+        groupedByDate[date] = [];
+      }
+      groupedByDate[date].push(lecture);
+    });
+
+    const sortedDates = Object.keys(groupedByDate).sort(
+      (a, b) => new Date(a) - new Date(b),
+    );
+
+    const sortedTopics = sortedDates.flatMap((date) => groupedByDate[date]);
+
+    res.json({
+      success: true,
+      topics: sortedTopics.map((l) => ({
+        title: l.title,
+        courseName: l.courseName || "",
+        processedAt: l.processedAt,
+      })),
+    });
+  } catch (error) {
+    console.error("[Chat API] Topics error:", error.message);
+    res.status(500).json({ error: "Failed to fetch topics" });
+  }
+});
+
 router.get("/:chatId", fetchuser, async (req, res) => {
   try {
     const { chatId } = req.params;
